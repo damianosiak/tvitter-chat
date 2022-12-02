@@ -1,0 +1,90 @@
+DELIMITER //
+CREATE or replace PROCEDURE p_removeDislike(IN ipost int, IN iuser int, OUT retval tinyint(1))
+BEGIN
+	DECLARE amount_dl int(11) default 0;
+	select ifnull(count(post),0) into amount_dl from dislikes where post=ipost and user=iuser;
+	
+	IF amount_dl>0 THEN
+		update posts set dislikes=dislikes-1 where pid=ipost;
+		set retval=1;
+        delete from dislikes where post=ipost and user=iuser;
+    ELSE
+    	set retval=0;
+	END IF;
+END //
+DELIMITER ;
+
+
+============================================================================================================================
+
+
+DELIMITER //
+CREATE or replace PROCEDURE p_removeLike(IN ipost int, IN iuser int, OUT retval tinyint(1))
+BEGIN
+	DECLARE amount_l int(11) default 0;
+	select ifnull(count(post),0) into amount_l from likes where post=ipost and user=iuser;
+	
+    IF amount_l>0 THEN
+    	update posts set likes=likes-1 where pid=ipost;
+        set retval=1;
+        delete from likes where post=ipost and user=iuser;
+    ELSE
+		set retval=0;
+	END IF;
+END //
+DELIMITER ;
+
+
+============================================================================================================================
+
+
+DELIMITER //
+CREATE or replace PROCEDURE p_addLike(IN ipost int, IN iuser int, OUT retval tinyint(1))
+BEGIN
+	DECLARE amount_dl int(11) default 0;
+	DECLARE amount_l int(11) default 0;
+	select ifnull(count(post),0) into amount_dl from dislikes where post=ipost and user=iuser;
+	select ifnull(count(post),0) into amount_l from likes where post=ipost and user=iuser;
+	
+    IF amount_l=0 THEN
+    	update posts set likes=likes+1 where pid=ipost;
+        set retval=1;
+        insert into likes (post, user) values (ipost, iuser);
+    ELSE
+    	set retval=0;
+    END IF;
+
+	IF amount_dl>0 THEN
+		update posts set dislikes=dislikes-1 where pid=ipost;
+		delete from dislikes where post=ipost and user=iuser;
+	END IF;	
+END //
+DELIMITER ;
+
+
+============================================================================================================================
+
+
+DELIMITER //
+CREATE or replace PROCEDURE p_addDislike(IN ipost int, IN iuser int, OUT retval tinyint(1))
+BEGIN
+	DECLARE amount_dl int(11) default 0;
+	DECLARE amount_l int(11) default 0;
+	select ifnull(count(post),0) into amount_dl from dislikes where post=ipost and user=iuser;
+	select ifnull(count(post),0) into amount_l from likes where post=ipost and user=iuser;
+	
+    IF amount_dl<=0 THEN
+    	update posts set dislikes=dislikes+1 where pid=ipost;
+        set retval=1;
+        insert into dislikes (post, user) values (ipost, iuser);
+    ELSE
+    	set retval=0;
+	END IF;
+
+
+	IF amount_l>0 THEN
+		update posts set likes=likes-1 where pid=ipost;
+		delete from likes where post=ipost and user=iuser;
+	END IF;
+END //
+DELIMITER ;
